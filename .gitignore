@@ -1,5 +1,4 @@
 *.pyc
 *.pth
-Data/
 
 .DS_Store
