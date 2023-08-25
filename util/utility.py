@@ -34,3 +34,18 @@ def sim_result(array: np.array):
       result_lists.append(indices.tolist())
 
   return result_lists
+
+def filter_sublists(input_list):
+    # 결과 리스트 초기화
+    result = []
+    result_idx = []
+    for idx, sublist in enumerate(input_list):
+        # 현재 서브리스트가 다른 서브리스트에 완전히 포함되는지 확인
+        is_subset = any(all(item in other for item in sublist) for other in input_list if other != sublist)
+        
+        # 현재 서브리스트가 다른 서브리스트에 포함되지 않는 경우 결과 리스트에 추가
+        if not is_subset:
+            result.append(sublist)
+            result_idx.append(idx)
+    
+    return result, np.array(result_idx)
