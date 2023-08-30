@@ -11,9 +11,7 @@ def soft_max(x):
 def threshold_below(arr, threshold):
     return np.where(arr <= threshold, 0, arr)
 
-# Factor Analysis를 통해 Column의 값을 Factor를 통한 Vector로 만들고, 이를 활용해 어텐션 진행.
-# But 현재 상태에서는 그냥 랜덤한 값을 이용해서 출력할 뿐 이것이 좋다고 말할 수는 없는 상황임
-# 이에대해서는 조금 더 고민해볼 필요가 있을 것으로 보임 ...
+ㅜㅇㅇ
 class Factor_attention():
     def __init__(self, array:np.array, n_factors:int, dim_info:int):
         self.array = array
