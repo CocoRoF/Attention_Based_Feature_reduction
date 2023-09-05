@@ -1,4 +1,6 @@
 *.pyc
 *.pth
 
+Docs/
+
 .DS_Store
