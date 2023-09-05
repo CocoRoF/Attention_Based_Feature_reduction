@@ -20,8 +20,6 @@ class columns_to_vector():
         return loadings
 
 class Factor_attention():
-  from util.module import columns_to_vector
-
   def __init__(self, array:np.array, n_factors:int, dim_infomation:int):
     self.array = array
     self.n_factors = n_factors
