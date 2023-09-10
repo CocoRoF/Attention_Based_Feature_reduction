@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from factor_analyzer import FactorAnalyzer
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
@@ -33,6 +36,58 @@ class Factor_attention():
       self.under_cos_sim = threshold_below(self.cos_sim, threshold)
       self.total_result = sim_result(self.under_cos_sim)
       self.result, self.result_idx = filter_sublists(self.total_result)
+
+  def attention_array(self, info_dim:int = 5):
+    self.selected_array_list = []
+    for i in self.result:
+      selected_array = self.array[:, i]
+      self.selected_array_list.append(selected_array)
+      
+    self.selected_value_list = []
+    for i in self.result:
+      selected_value = self.column_vector[i, :]
+      self.selected_value_list.append(selected_value)      
+    
+    self.info_dim = info_dim
+    
+    self.attention_query = np.random.rand(self.n_factors, self.info_dim)
+    self.attention_key = np.random.rand(self.n_factors, self.info_dim)
+    self.attention_value = np.random.rand(self.n_factors, self.info_dim)
+    self.context_score = np.random.rand(self.info_dim, 1)
+    
+    self.attention_score = []
+    for i in self.selected_value_list:
+      if i.shape[0] == 1:
+        self.attention_score.append([1])
+      else:
+        query_matrix = np.matmul(i, self.attention_query)
+        key_matrix = np.matmul(i, self.attention_key)
+        value_matrix = np.matmul(i, self.attention_value)
+        attention_filter = np.matmul(query_matrix, key_matrix.T)
+        attention_score = np.apply_along_axis(soft_max, axis=1, arr=attention_filter)
+        attention_context = np.matmul(attention_score, value_matrix)
+        score_weight = np.matmul(attention_context, self.context_score)
+        self.attention_score.append(score_weight)
+    
+class Attention(nn.Module):
+      def __init__(self, input_size, output_size, n_factor, info_dim):
+            super(Attention, self).__init__()
+            self.attention_query = nn.Parameter(torch.randn(n_factor, info_dim))
+            self.attention_key = nn.Parameter(torch.randn(n_factor, info_dim))
+            self.attention_value = nn.Parameter(torch.randn(n_factor, info_dim))
+            self.output_linear = nn.Linear(info_dim, output_size)
+            
+      def forward(self, array):
+            
+
+
+        
+        
+        
+        
+      
+    
+    
 
 
 
