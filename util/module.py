@@ -10,10 +10,12 @@ from util.utility import *
 
 # array를 받아서 Columns들을 Vector로 변경.
 class columns_to_vector():
-    def __init__(self, array:np.array, n_factors:int, dim_info:int):
+    def __init__(self, array:np.array, n_factors:int=None):
         self.array = array
-        self.n_factors = n_factors
-        self.dim_info = dim_info
+        if n_factors:
+          self.n_factors = n_factors
+        else:
+          self.n_factors = len(array[0])
         self.n_col = len(array[0])
         
     def factor(self, rotation:str='varimax'): 
@@ -23,21 +25,29 @@ class columns_to_vector():
         return loadings
 
 class Factor_attention():
-  def __init__(self, array:np.array, n_factors:int, dim_infomation:int):
+  def __init__(self, array:np.array, n_factors:int=None, dim_information:int=16):
     self.array = array
-    self.n_factors = n_factors
-    self.dim_info = dim_infomation
+    if n_factors:
+          self.n_factors = n_factors
+    else:
+      self.n_factors = len(array[0])
+    self.dim_info = dim_information
     self.n_col = len(array[0])
 
   def col_to_vec(self, method:str = 'factor', rotation:str = 'varimax', threshold:float = 0.5):
     if method == 'factor':
-      self.column_vector = columns_to_vector(self.array, self.n_factors, self.dim_info).factor(rotation = rotation)
+      self.column_vector = columns_to_vector(self.array, self.n_factors).factor(rotation = rotation)
       self.cos_sim = array_cos_sim(self.column_vector)
       self.under_cos_sim = threshold_below(self.cos_sim, threshold)
       self.total_result = sim_result(self.under_cos_sim)
       self.result, self.result_idx = filter_sublists(self.total_result)
 
-  def attention_array(self, info_dim:int = 5):
+    unique_list = []
+    for sublist in self.result:
+        if sublist not in unique_list:
+            unique_list.append(sublist)
+    self.result = unique_list
+    
     self.selected_array_list = []
     for i in self.result:
       selected_array = self.array[:, i]
@@ -46,49 +56,58 @@ class Factor_attention():
     self.selected_value_list = []
     for i in self.result:
       selected_value = self.column_vector[i, :]
-      self.selected_value_list.append(selected_value)      
-    
-    self.info_dim = info_dim
-    
-    self.attention_query = np.random.rand(self.n_factors, self.info_dim)
-    self.attention_key = np.random.rand(self.n_factors, self.info_dim)
-    self.attention_value = np.random.rand(self.n_factors, self.info_dim)
-    self.context_score = np.random.rand(self.info_dim, 1)
-    
-    self.attention_score = []
-    for i in self.selected_value_list:
-      if i.shape[0] == 1:
-        self.attention_score.append([1])
-      else:
-        query_matrix = np.matmul(i, self.attention_query)
-        key_matrix = np.matmul(i, self.attention_key)
-        value_matrix = np.matmul(i, self.attention_value)
-        attention_filter = np.matmul(query_matrix, key_matrix.T)
-        attention_score = np.apply_along_axis(soft_max, axis=1, arr=attention_filter)
-        attention_context = np.matmul(attention_score, value_matrix)
-        score_weight = np.matmul(attention_context, self.context_score)
-        self.attention_score.append(score_weight)
-    
-class Attention(nn.Module):
-      def __init__(self, input_size, output_size, n_factor, info_dim):
-            super(Attention, self).__init__()
-            self.attention_query = nn.Parameter(torch.randn(n_factor, info_dim))
-            self.attention_key = nn.Parameter(torch.randn(n_factor, info_dim))
-            self.attention_value = nn.Parameter(torch.randn(n_factor, info_dim))
-            self.output_linear = nn.Linear(info_dim, output_size)
-            
-      def forward(self, array):
-            
-
-
-        
-        
-        
-        
+      self.selected_value_list.append(selected_value)
       
+def min_relation(tensor: torch.Tensor, n_factors:int=None, method:str ='factor', rotation:str = 'varimax'):
+  temp_array = tensor.detach().numpy()
+  if n_factors:
+    n_factor = n_factors
+  else:
+    n_factor = temp_array.shape[-1]
     
+  column_vector = columns_to_vector(temp_array, n_factor).factor(rotation = rotation)
+  cos_sim = array_cos_sim(column_vector)
+  abs_cos_sim = abs(cos_sim)
+  sum_cos_sim = abs_cos_sim.sum() - n_factor
+  return torch.tensor(sum_cos_sim)
+  
+class Attention(nn.Module):
+  def __init__(self, n_factor, info_dim):
+    super(Attention, self).__init__()
+    self.attention_query = nn.Parameter(torch.randn(n_factor, info_dim).double(), requires_grad=True)
+    self.attention_key = nn.Parameter(torch.randn(n_factor, info_dim).double(), requires_grad=True)
+    self.attention_value = nn.Parameter(torch.randn(n_factor, info_dim).double(), requires_grad=True)
+    self.output_linear = nn.Linear(info_dim, 1)
+        
+  def forward(self, Factor_Attention: Factor_attention):
+    score_weight_list = []
+    for variable in Factor_Attention.selected_value_list:
+      variable = torch.tensor(variable).double()
+      
+      if variable.shape[0] == 1:
+        score_weight = torch.ones(1, 1)
+        score_weight_list.append(score_weight)
+        
+      else:
+        query_result = torch.matmul(variable, self.attention_query)
+        key_result = torch.matmul(variable, self.attention_key)
+        value_result = torch.matmul(variable, self.attention_value)
+        attention_filter = torch.matmul(query_result, key_result.T)
+        attention_score = nn.Softmax(dim=-1)(attention_filter)
+        attention_context = torch.matmul(attention_score, value_result)
+        score_weight = self.output_linear(attention_context.float())
+        score_weight_list.append(score_weight)
+      
+    if len(score_weight_list) != len(Factor_Attention.selected_array_list):
+      print('Invalid Length Error.')
     
-
+    total_result = torch.empty(Factor_Attention.array.shape[0], 0)
+    for num in range(len(score_weight_list)):
+      result = torch.matmul(torch.tensor(Factor_Attention.selected_array_list[num], requires_grad=True).double(), score_weight_list[num].double())
+      total_result = torch.cat((total_result, result), dim=1)
+    
+    return total_result
+        
 
 
 # class columns_to_vector():
