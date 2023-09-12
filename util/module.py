@@ -38,7 +38,7 @@ class Factor_attention():
     if method == 'factor':
       self.column_vector = columns_to_vector(self.array, self.n_factors).factor(rotation = rotation)
       self.cos_sim = array_cos_sim(self.column_vector)
-      self.under_cos_sim = threshold_below(self.cos_sim, threshold)
+      self.under_cos_sim = threshold_below_array(self.cos_sim, threshold)
       self.total_result = sim_result(self.under_cos_sim)
       self.result, self.result_idx = filter_sublists(self.total_result)
 
@@ -52,11 +52,14 @@ class Factor_attention():
     for i in self.result:
       selected_array = self.array[:, i]
       self.selected_array_list.append(selected_array)
-      
+    self.selected_raw_tensor_list = [torch.Tensor(arr).double() for arr in self.selected_array_list]
+    
     self.selected_value_list = []
     for i in self.result:
       selected_value = self.column_vector[i, :]
       self.selected_value_list.append(selected_value)
+    self.selected_factor_tensor_list = [torch.Tensor(arr).double() for arr in self.selected_value_list]
+
       
 def min_relation(tensor: torch.Tensor, n_factors:int=None, method:str ='factor', rotation:str = 'varimax'):
   temp_array = tensor.detach().numpy()
@@ -80,12 +83,12 @@ class Attention(nn.Module):
     self.output_linear = nn.Linear(info_dim, 1)
         
   def forward(self, Factor_Attention: Factor_attention):
+    input_1 = Factor_Attention.selected_raw_tensor_list
+    input_2 = Factor_Attention.selected_factor_tensor_list
     score_weight_list = []
-    for variable in Factor_Attention.selected_value_list:
-      variable = torch.tensor(variable).double()
-      
+    for variable in input_2:      
       if variable.shape[0] == 1:
-        score_weight = torch.ones(1, 1)
+        score_weight = torch.ones(1, 1).double()
         score_weight_list.append(score_weight)
         
       else:
@@ -96,14 +99,14 @@ class Attention(nn.Module):
         attention_score = nn.Softmax(dim=-1)(attention_filter)
         attention_context = torch.matmul(attention_score, value_result)
         score_weight = self.output_linear(attention_context.float())
-        score_weight_list.append(score_weight)
+        score_weight_list.append(score_weight.double())
       
-    if len(score_weight_list) != len(Factor_Attention.selected_array_list):
+    if len(score_weight_list) != len(input_1):
       print('Invalid Length Error.')
     
     total_result = torch.empty(Factor_Attention.array.shape[0], 0)
     for num in range(len(score_weight_list)):
-      result = torch.matmul(torch.tensor(Factor_Attention.selected_array_list[num], requires_grad=True).double(), score_weight_list[num].double())
+      result = torch.matmul((input_1[num]), score_weight_list[num])
       total_result = torch.cat((total_result, result), dim=1)
     
     return total_result
