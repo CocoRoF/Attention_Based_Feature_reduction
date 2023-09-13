@@ -10,7 +10,15 @@ threshold = 0.5
 lightgbm = 43360 37초
 xgboost = 45755 25초
 
+threshold = 0.35
+lightgbm = 44413 38초
+xgboost = 46353 39초
+
 threshold = 0.2
 lightgbm = 42090 41초
 xgboost = 43458 40초
 
+시발
+좇됐는데
+걍 방향 틀고 다른거 해야함
+이럴거면 JSlinear 만드는게 나을듯 이거나 하자  그럼이미끝남 ㄹㅇ
