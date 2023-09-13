@@ -1,0 +1,16 @@
+원본데이터
+lightgbm: 35419 55초
+xgboost: 30677 40초
+
+threshold = 0.65
+lightgbm = 42699 37초
+xgboost = 41392 35초
+
+threshold = 0.5
+lightgbm = 43360 37초
+xgboost = 45755 25초
+
+threshold = 0.2
+lightgbm = 42090 41초
+xgboost = 43458 40초
+

@@ -7,6 +7,8 @@ from factor_analyzer import FactorAnalyzer
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 from util.utility import *
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 # array를 받아서 Columns들을 Vector로 변경.
 class columns_to_vector():
@@ -52,13 +54,13 @@ class Factor_attention():
     for i in self.result:
       selected_array = self.array[:, i]
       self.selected_array_list.append(selected_array)
-    self.selected_raw_tensor_list = [torch.Tensor(arr).double() for arr in self.selected_array_list]
+    self.selected_raw_tensor_list = [torch.Tensor(arr).double().to(device) for arr in self.selected_array_list]
     
     self.selected_value_list = []
     for i in self.result:
       selected_value = self.column_vector[i, :]
       self.selected_value_list.append(selected_value)
-    self.selected_factor_tensor_list = [torch.Tensor(arr).double() for arr in self.selected_value_list]
+    self.selected_factor_tensor_list = [torch.Tensor(arr).double().to(device) for arr in self.selected_value_list]
 
       
 def min_relation(tensor: torch.Tensor, n_factors:int=None, method:str ='factor', rotation:str = 'varimax'):
@@ -77,39 +79,39 @@ def min_relation(tensor: torch.Tensor, n_factors:int=None, method:str ='factor',
 class Attention(nn.Module):
   def __init__(self, n_factor, info_dim):
     super(Attention, self).__init__()
-    self.attention_query = nn.Parameter(torch.randn(n_factor, info_dim).double(), requires_grad=True)
-    self.attention_key = nn.Parameter(torch.randn(n_factor, info_dim).double(), requires_grad=True)
-    self.attention_value = nn.Parameter(torch.randn(n_factor, info_dim).double(), requires_grad=True)
-    self.output_linear = nn.Linear(info_dim, 1)
+    self.attention_query = nn.Parameter(torch.randn(n_factor, info_dim).double().to(device), requires_grad=True)
+    self.attention_key = nn.Parameter(torch.randn(n_factor, info_dim).double().to(device), requires_grad=True)
+    self.attention_value = nn.Parameter(torch.randn(n_factor, info_dim).double().to(device), requires_grad=True)
+    self.output_linear = nn.Linear(info_dim, 1).to(device)
         
   def forward(self, Factor_Attention: Factor_attention):
     input_1 = Factor_Attention.selected_raw_tensor_list
     input_2 = Factor_Attention.selected_factor_tensor_list
-    score_weight_list = []
+    self.score_weight_list = []
     for variable in input_2:      
       if variable.shape[0] == 1:
-        score_weight = torch.ones(1, 1).double()
-        score_weight_list.append(score_weight)
+        score_weight = torch.ones(1, 1).double().to(device)
+        self.score_weight_list.append(score_weight)
         
       else:
-        query_result = torch.matmul(variable, self.attention_query)
-        key_result = torch.matmul(variable, self.attention_key)
-        value_result = torch.matmul(variable, self.attention_value)
-        attention_filter = torch.matmul(query_result, key_result.T)
-        attention_score = nn.Softmax(dim=-1)(attention_filter)
-        attention_context = torch.matmul(attention_score, value_result)
-        score_weight = self.output_linear(attention_context.float())
-        score_weight_list.append(score_weight.double())
+        query_result = torch.matmul(variable, self.attention_query).to(device)
+        key_result = torch.matmul(variable, self.attention_key).to(device)
+        value_result = torch.matmul(variable, self.attention_value).to(device)
+        attention_filter = torch.matmul(query_result, key_result.T).to(device)
+        attention_score = nn.Softmax(dim=-1)(attention_filter).to(device)
+        attention_context = torch.matmul(attention_score, value_result).to(device)
+        score_weight = self.output_linear(attention_context.float()).to(device)
+        self.score_weight_list.append(score_weight.double().to(device))
       
-    if len(score_weight_list) != len(input_1):
+    if len(self.score_weight_list) != len(input_1):
       print('Invalid Length Error.')
     
-    total_result = torch.empty(Factor_Attention.array.shape[0], 0)
-    for num in range(len(score_weight_list)):
-      result = torch.matmul((input_1[num]), score_weight_list[num])
-      total_result = torch.cat((total_result, result), dim=1)
+    self.total_result = torch.empty(Factor_Attention.array.shape[0], 0).to(device)
+    for num in range(len(self.score_weight_list)):
+      result = torch.matmul((input_1[num]).to(device), self.score_weight_list[num].to(device)).to(device)
+      self.total_result = torch.cat((self.total_result, result), dim=1).to(device)
     
-    return total_result
+    return self.total_result
         
 
 
