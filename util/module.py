@@ -77,12 +77,15 @@ def min_relation(tensor: torch.Tensor, n_factors:int=None, method:str ='factor',
   return torch.tensor(sum_cos_sim)
   
 class Attention(nn.Module):
-  def __init__(self, n_factor, info_dim):
+  def __init__(self, n_factor, info_dim:int = 512):
     super(Attention, self).__init__()
     self.attention_query = nn.Parameter(torch.randn(n_factor, info_dim).double().to(device), requires_grad=True)
     self.attention_key = nn.Parameter(torch.randn(n_factor, info_dim).double().to(device), requires_grad=True)
     self.attention_value = nn.Parameter(torch.randn(n_factor, info_dim).double().to(device), requires_grad=True)
-    self.output_linear = nn.Linear(info_dim, 1).to(device)
+    self.output_linear_1 = nn.Linear(info_dim, 256).to(device)
+    self.output_linear_2 = nn.Linear(256, 128).to(device)
+    self.output_linear_3 = nn.Linear(128, 64).to(device)
+    self.output_linear_4 = nn.Linear(64, 1).to(device)
         
   def forward(self, Factor_Attention: Factor_attention):
     input_1 = Factor_Attention.selected_raw_tensor_list
@@ -100,7 +103,10 @@ class Attention(nn.Module):
         attention_filter = torch.matmul(query_result, key_result.T).to(device)
         attention_score = nn.Softmax(dim=-1)(attention_filter).to(device)
         attention_context = torch.matmul(attention_score, value_result).to(device)
-        score_weight = self.output_linear(attention_context.float()).to(device)
+        hidden_1 = self.output_linear_1(attention_context.float()).to(device)
+        hidden_2 = self.output_linear_2(hidden_1.float()).to(device)
+        hidden_3 = self.output_linear_3(hidden_2.float()).to(device)
+        score_weight = self.output_linear_4(hidden_3.float()).to(device)
         self.score_weight_list.append(score_weight.double().to(device))
       
     if len(self.score_weight_list) != len(input_1):
