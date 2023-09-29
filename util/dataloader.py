@@ -14,6 +14,15 @@ def standardization(X, Y):
     return scaler_X.fit_transform(X), scaler_Y.fit_transform(Y)
 
 def data_load(data:str, preprocess_func=None, test_ratio:float=0.2, random_state:int=None):
+    """
+    data type = 'boston', 'house', 'home', 'ctg'
+    
+    'boston' is 'Boston housing dataset'. It has 13 Features(11 Numerical values, and 2 Categorical values), one Y_value(MEDV).
+    
+    'house' is 'Home Data for ML course' from Kaggle. It has 79 Features(), one Y_value(SalePrice)
+    
+    
+    """
     if data == 'boston':
         path = './Data/Boston housing dataset/boston.csv'
         total = pd.read_csv(path)
@@ -30,10 +39,10 @@ def data_load(data:str, preprocess_func=None, test_ratio:float=0.2, random_state
         
     return X_train, X_test, y_train, y_test
     
-    # if data == 'house':
-    #     path = './Data/home-data-for-ml-course/'
-    #     train = pd.read_csv(path + "train.csv")
-    #     test = pd.read_csv(path + 'test.csv')
+    if data == 'house':
+        path = './Data/home-data-for-ml-course/'
+        train = pd.read_csv(path + "train.csv")
+        test = pd.read_csv(path + 'test.csv')
 
     # if data == 'home':
     #     path = './Data/house-prices-advanced-regression-techniques/'
