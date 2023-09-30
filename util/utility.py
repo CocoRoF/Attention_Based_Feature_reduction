@@ -4,6 +4,9 @@ import torch
 from numpy.linalg import norm
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# 필요한 모든 Utility Function을 정의합니다. 정리가 필요합니다.
+
+
 # 소프트맥스 함수 지정
 def soft_max(x):
     exp_x = np.exp(x - np.max(x))

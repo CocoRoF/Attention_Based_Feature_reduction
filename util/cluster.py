@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from util.utility import *
 
+# Feature의 Information을 추출한 행렬로부터 비슷한 Feature끼리 묶어주는 방법들을 정리합니다.
+
 # Input = Data_Info_Array (maybe it's shape = (n*n); n = # of Features)
 # Output = List of Subset features, like [[0, 3], [1, 2], [4, 5, 6]]
 

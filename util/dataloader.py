@@ -3,6 +3,9 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
 
+# Data를 불러오는 함수들에 대해서만 정의합니다.
+# 불필요한 데이터를 제거하는 과정이 함수 내부에 포함되었습니다.
+
 # dataloader는 특정 데이터를 받아 Array 형태로 반환한다.
 # 이 때 X는 Numerical Values만을 반환하며, 필요에 따라 정규화나, 표준화를 실시할 수 있다.
 # 아직 Categorical Values에 대한 처리는 어떻게 해야할지 결정하지 않았다.

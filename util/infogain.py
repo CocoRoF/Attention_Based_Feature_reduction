@@ -5,6 +5,9 @@ from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 from util.utility import *
 
+# 전체 데이터의 Array로부터 Information을 추출하는 방법들에 대해서만 기술합니다.
+# 최종 결과는 전체 데이터의 Feature를 n차원의 Vector로 표현한 Matrix가 됩니다.
+
 # Input = Data_X_Array, output = Information_matrix of X_Data's Features(array)
 
 class Feature_infogain():

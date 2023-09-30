@@ -6,7 +6,8 @@ import torch.optim as optim
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-#
+# Subset List를 받아 Error_Function에서 정의하는 방향으로 새로운 Dataset을 만들어 내는 모델을 정의합니다.
+# 최종 데이터는 New Data가 되어야 합니다.
 
 class feature_combination():
     def __init__(self, raw_data_matrix:np.array, information_matrix:np.array, similarity_feature_list:list):
