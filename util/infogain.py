@@ -20,15 +20,14 @@ class Feature_infogain():
     # 특정 Feature의 정보를, 잠재된 Factor와의 관계성으로 표현한다고 생각
     def FA(self, n_factor:int=None, rotation:str='varimax'):
         if n_factor == None:
-            n_factor = self.num_feature
-        analyzer = FactorAnalyzer(n_factors=n_factor, rotation=rotation)
+            self.n_factor = self.num_feature
+        else:
+            self.n_factor = n_factor
+        analyzer = FactorAnalyzer(n_factors=self.n_factor, rotation=rotation)
         analyzer.fit(self.X_Data)
         return analyzer.loadings_
     
-    def 
-    
-    def FunctionName(args):
-        
+            
         
 
     
