@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 # 이 때 X는 Numerical Values만을 반환하며, 필요에 따라 정규화나, 표준화를 실시할 수 있다.
 # 아직 Categorical Values에 대한 처리는 어떻게 해야할지 결정하지 않았다.
 
+# input = Data Name / output = Data Array(X and Y)
 
 def normalization(X, Y):
     scaler_X = MinMaxScaler()
